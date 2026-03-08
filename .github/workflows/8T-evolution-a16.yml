@@ -37,12 +37,20 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
         mkdir clang-aosp
-        git clone -q --depth=1 --single-branch https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 -b android16-release clang-aosp
+        git clone -q --depth=1 --single-branch https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 -b android14-release clang-aosp
 
     - name: 下载内核源码
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
         git clone ${{ env.KERNEL_SOURCE }} -b ${{ env.KERNEL_SOURCE_BRANCH }} android-kernel --depth=1
+        sed -i '/CONFIG_KPROBES/d' android-kernel/arch/arm64/configs/${{ env.KERNEL_CONFIG }}
+        sed -i '/CONFIG_KPROBE_EVENTS/d' android-kernel/arch/arm64/configs/${{ env.KERNEL_CONFIG }}
+        sed -i '/CONFIG_KSU_KPROBE_HOOKS/d' android-kernel/arch/arm64/configs/${{ env.KERNEL_CONFIG }}
+        sed -i '/CONFIG_KSU=/d' android-kernel/arch/arm64/configs/${{ env.KERNEL_CONFIG }}
+        echo "CONFIG_KPROBES=y" >> android-kernel/arch/arm64/configs/${{ env.KERNEL_CONFIG }}
+        echo "CONFIG_KPROBE_EVENTS=y" >> android-kernel/arch/arm64/configs/${{ env.KERNEL_CONFIG }}
+        echo "CONFIG_KSU_KPROBE_HOOKS=y" >> android-kernel/arch/arm64/configs/${{ env.KERNEL_CONFIG }}
+        echo "CONFIG_KSU=y" >> android-kernel/arch/arm64/configs/${{ env.KERNEL_CONFIG }}
                       
     - name: 开启lxc和docker配置
       if: env.ENABLE_LXC_DOCKER == 'true'
@@ -70,7 +78,7 @@ jobs:
       if: env.ENABLE_KERNELSU == 'true'
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s ${{ env.KERNELSU_TAG }}
+        curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s legacy
 
     - name: 开启kvm
       if: env.ENABLE_KVM == 'true'
